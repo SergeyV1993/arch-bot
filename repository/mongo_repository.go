@@ -26,7 +26,7 @@ func (mr *MongoRepository) SetBuilds(ctx context.Context, build ArchitectBuilds)
 		Name:           "Особняк Миндовского",
 		Address:        "Поварская, 44/2с",
 		LinkMapAddress: "https://yandex.ru/maps?mode=search&text=55.756828,37.588665",
-		Link:           "https://yandex.ru/",
+		Link:           "https://t.me/c/1640066427/2",
 		Description:    "Особняк представительства Новой Зеландии. Роскошный модерн ХХ века",
 		Location:       NewLocation(37.588665, 55.756828),
 		CreatedAt:      time.Now(),
@@ -61,34 +61,6 @@ func (mr *MongoRepository) GetBuildsByDistance(ctx context.Context, longitude, l
 	location := NewLocation(long, lat)
 
 	collections := mr.db.Collection(collectionName)
-	/*
-		filter := bson.D{
-			{"location",
-				bson.D{
-					{"$near", bson.D{
-						{"$geometry", location},
-						{"$maxDistance", distance},
-					}},
-				}},
-		}
-
-		res, err := collections.Find(ctx, filter)
-		if err != nil {
-			return nil, err
-		}
-
-		//defer res.Close(ctx)
-
-		var ab ArchitectBuilds
-		for res.Next(ctx) {
-			err = res.Decode(&ab)
-			if err != nil {
-				return nil, err
-			}
-
-			abs = append(abs, ab)
-		}
-	*/
 	pipeline, err := mr.createPipeline(location, distance)
 	if err != nil {
 		return nil, err

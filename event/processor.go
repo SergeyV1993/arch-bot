@@ -23,20 +23,22 @@ type Processor struct {
 	db     MongoRepositoryInterface
 
 	offset int
+	limit  int
 	radius int
 }
 
-func NewProcessor(client client.TelegramClient, db MongoRepositoryInterface, offset, radius int) *Processor {
+func NewProcessor(client client.TelegramClient, db MongoRepositoryInterface, radius, offset, limit int) *Processor {
 	return &Processor{
 		client: &client,
 		db:     db,
 		offset: offset,
+		limit:  limit,
 		radius: radius,
 	}
 }
 
-func (p *Processor) Fetch(ctx context.Context, limit int) ([]models.Update, error) {
-	updates, err := p.client.Updates(p.offset, limit)
+func (p *Processor) Fetch(ctx context.Context) ([]models.Update, error) {
+	updates, err := p.client.Updates(p.offset, p.limit)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't get events")
 	}

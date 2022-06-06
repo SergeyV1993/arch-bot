@@ -29,11 +29,11 @@ func main() {
 	}
 
 	dbRepository := repository.NewMongoRepository(dbClient.Database(env.DbName))
-	processor := event.NewProcessor(*bot, dbRepository, 0, env.RadiusMeters)
+	processor := event.NewProcessor(*bot, dbRepository, env.RadiusMeters, config.DefaultOffset, config.DefaultLimit)
 
 	log.Print("service started")
 
-	cons := consumer.NewConsumer(*processor, 100)
+	cons := consumer.NewConsumer(*processor)
 	if err := cons.Start(ctx); err != nil {
 		log.Fatal("service is stopped", err)
 	}

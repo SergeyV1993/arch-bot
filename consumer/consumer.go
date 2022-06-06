@@ -9,25 +9,23 @@ import (
 )
 
 type ProcessorInterface interface {
-	Fetch(ctx context.Context, limit int) ([]models.Update, error)
+	Fetch(ctx context.Context) ([]models.Update, error)
 	Process(ctx context.Context, event models.Update) error
 }
 
 type Consumer struct {
 	processorService ProcessorInterface
-	batchSize        int
 }
 
-func NewConsumer(processorService event.Processor, batchSize int) *Consumer {
+func NewConsumer(processorService event.Processor) *Consumer {
 	return &Consumer{
 		processorService: &processorService,
-		batchSize:        batchSize,
 	}
 }
 
 func (c *Consumer) Start(ctx context.Context) error {
 	for {
-		gotEvents, err := c.processorService.Fetch(ctx, c.batchSize)
+		gotEvents, err := c.processorService.Fetch(ctx)
 		if err != nil {
 			log.Printf("[ERR] consumer: %s", err.Error())
 

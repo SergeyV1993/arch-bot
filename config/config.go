@@ -8,6 +8,9 @@ import (
 	"time"
 )
 
+const DefaultLimit = 50
+const DefaultOffset = 0
+
 type Env struct {
 	TelegramToken string
 
