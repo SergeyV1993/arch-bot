@@ -1,53 +1,45 @@
 package event
 
 import (
+	"ArchitectureBot/event/command_msg"
 	"ArchitectureBot/models"
-	"ArchitectureBot/repository"
 	"context"
-	"fmt"
 	"strings"
 )
 
 const (
-	StartCmd = "/start"
-	HelpCmd  = "/help"
-	//Todo убрать
-	SetGeoCmd = "/setpos"
+	HelpCmd = "/help"
 )
 
-func (p *Processor) doCommand(ctx context.Context, text string, location *models.Location, chatId int64) error {
-	text = strings.TrimSpace(text)
+func (p *Processor) doCommand(ctx context.Context, upd models.Update) error {
+	if upd.Message == nil {
+		return nil
+	}
 
-	if location != nil {
-		return p.SendBuilds(ctx, chatId, location)
+	text := strings.TrimSpace(upd.Message.Text)
+
+	if upd.Message.Location != nil {
+		return p.SendBuilds(ctx, upd.Message.ChatID, upd.Message.Location)
 	}
 
 	switch text {
-	case StartCmd:
-		return p.SendStart(ctx, chatId)
 	case HelpCmd:
-		return p.SendHelp(ctx, chatId)
-	case SetGeoCmd:
-		return p.SetBuilds(ctx)
+		return p.SendHelp(ctx, upd.Message.ChatID, upd.Message.Username)
 	default:
-		return p.SendUnknown(ctx, chatId)
+		return p.SendUnknown(ctx, upd.Message.ChatID)
 	}
 }
 
-func (p *Processor) SendHelp(ctx context.Context, chatId int64) error {
-	return p.client.SendMessage(chatId, "Инструкция")
-}
-
-func (p *Processor) SendStart(ctx context.Context, chatId int64) error {
-	return p.client.SendMessage(chatId, "Приветсвую тебя, мой господин")
+func (p *Processor) SendHelp(ctx context.Context, chatId int64, username string) error {
+	return p.client.SendMessage(chatId, command_msg.CreateSetupMsg(username))
 }
 
 func (p *Processor) SendUnknown(ctx context.Context, chatId int64) error {
-	return p.client.SendMessage(chatId, "Хм, эта команда мне не знакома")
+	return p.client.SendMessage(chatId, command_msg.CreateUnknownMsg())
 }
 
 func (p *Processor) SendBuilds(ctx context.Context, chatId int64, location *models.Location) error {
-	builds, err := p.getBuilds(ctx, location.Longitude, location.Latitude, p.radius)
+	builds, err := p.db.GetBuildsByDistance(ctx, location.Longitude, location.Latitude, p.radius)
 	if err != nil {
 		return err
 	}
@@ -60,38 +52,8 @@ func (p *Processor) SendBuilds(ctx context.Context, chatId int64, location *mode
 	}
 
 	for _, v := range builds {
-		text += p.createBuildMsg(v)
+		text += command_msg.CreateBuildMsg(v)
 	}
 
 	return p.client.SendMessage(chatId, text)
-}
-
-func (p *Processor) getBuilds(ctx context.Context, longitude, latitude string, radius int) ([]repository.ArchitectBuilds, error) {
-	builds, err := p.db.GetBuildsByDistance(ctx, longitude, latitude, radius)
-	if err != nil {
-		return nil, err
-	}
-
-	return builds, nil
-}
-
-func (p *Processor) createBuildMsg(build repository.ArchitectBuilds) string {
-	text := fmt.Sprintf("*%s*", build.Name) + "\n" +
-		fmt.Sprintf("Приблизительное расстояние к достопримечательности: _%.1f_ м.", build.Distance) + "\n" +
-		fmt.Sprintf("[%s](%s)", build.Address, build.LinkMapAddress) + "\n" +
-		fmt.Sprintf("*Описание: *_%s_", build.Description) + "\n" +
-		fmt.Sprintf("[Более подробно по ссылке](%s)", build.Link) +
-		"\n" + "\n"
-
-	return text
-}
-
-//TODO debug
-func (p *Processor) SetBuilds(ctx context.Context) error {
-	err := p.db.SetBuilds(ctx, repository.ArchitectBuilds{})
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

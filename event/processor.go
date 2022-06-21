@@ -14,7 +14,6 @@ type TelegramClientInterface interface {
 }
 
 type MongoRepositoryInterface interface {
-	SetBuilds(ctx context.Context, build repository.ArchitectBuilds) error
 	GetBuildsByDistance(ctx context.Context, longitude, latitude string, distance int) ([]repository.ArchitectBuilds, error)
 }
 
@@ -53,7 +52,7 @@ func (p *Processor) Fetch(ctx context.Context) ([]models.Update, error) {
 }
 
 func (p *Processor) Process(ctx context.Context, event models.Update) error {
-	if err := p.doCommand(ctx, event.Message.Text, event.Message.Location, event.Message.ChatID); err != nil {
+	if err := p.doCommand(ctx, event); err != nil {
 		return errors.Wrap(err, "can't process message")
 	}
 

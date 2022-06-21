@@ -48,7 +48,11 @@ func (c *Consumer) Start(ctx context.Context) error {
 
 func (c *Consumer) handleEvents(ctx context.Context, updates []models.Update) error {
 	for _, update := range updates {
-		log.Printf("got new event: %s", update.Message.Text)
+		if update.Message.Location != nil {
+			log.Printf("got new event with location: %s", update.Message.Location)
+		} else {
+			log.Printf("got new event: %s", update.Message.Text)
+		}
 
 		if err := c.processorService.Process(ctx, update); err != nil {
 			log.Printf("can't handle event: %s", err.Error())

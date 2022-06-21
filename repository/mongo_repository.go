@@ -4,13 +4,12 @@ import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/x/bsonx"
 	"strconv"
-	"time"
 )
 
 const collectionName = "locations"
+
+const defaultLimit = 25
 
 type MongoRepository struct {
 	db *mongo.Database
@@ -18,33 +17,6 @@ type MongoRepository struct {
 
 func NewMongoRepository(db *mongo.Database) *MongoRepository {
 	return &MongoRepository{db: db}
-}
-
-//TODO debug
-func (mr *MongoRepository) SetBuilds(ctx context.Context, build ArchitectBuilds) error {
-	msg := ArchitectBuilds{
-		Name:           "Особняк Миндовского",
-		Address:        "Поварская, 44/2с",
-		LinkMapAddress: "https://yandex.ru/maps?mode=search&text=55.756828,37.588665",
-		Link:           "https://t.me/c/1640066427/2",
-		Description:    "Особняк представительства Новой Зеландии. Роскошный модерн ХХ века",
-		Location:       NewLocation(37.588665, 55.756828),
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
-	}
-
-	err := mr.createIndex(ctx)
-	if err != nil {
-		return err
-	}
-
-	collections := mr.db.Collection(collectionName)
-	_, err = collections.InsertOne(ctx, msg)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (mr *MongoRepository) GetBuildsByDistance(ctx context.Context, longitude, latitude string, distance int) ([]ArchitectBuilds, error) {
@@ -84,22 +56,6 @@ func (mr *MongoRepository) GetBuildsByDistance(ctx context.Context, longitude, l
 	return abs, nil
 }
 
-func (mr *MongoRepository) createIndex(ctx context.Context) error {
-	indexOpts := options.CreateIndexes().SetMaxTime(time.Second * 10)
-
-	pointIndexModel := mongo.IndexModel{
-		Options: options.Index(),
-		Keys:    bsonx.MDoc{"location": bsonx.String("2dsphere")},
-	}
-
-	_, err := mr.db.Collection(collectionName).Indexes().CreateOne(ctx, pointIndexModel, indexOpts)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (mr *MongoRepository) createPipeline(location Location, distance int) (mongo.Pipeline, error) {
 	geoNearStage := bson.D{
 		{"$geoNear",
@@ -112,8 +68,11 @@ func (mr *MongoRepository) createPipeline(location Location, distance int) (mong
 			}},
 	}
 
+	limitStage := bson.D{{"$limit", defaultLimit}}
+	sortStage := bson.D{{"$sort", bson.D{{"distance", 1}}}}
+
 	var pipeline mongo.Pipeline
-	pipeline = append(pipeline, geoNearStage)
+	pipeline = append(pipeline, geoNearStage, limitStage, sortStage)
 
 	return pipeline, nil
 }

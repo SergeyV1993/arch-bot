@@ -22,9 +22,11 @@ func NewTelegramClient(telegramToken string) *TelegramClient {
 }
 
 func (tc *TelegramClient) Updates(offset, limit int) ([]models.Update, error) {
-	uc := tgbotapi.NewUpdate(offset)
-	uc.Timeout = 60
-	uc.Limit = limit
+	uc := tgbotapi.UpdateConfig{
+		Offset:  offset,
+		Limit:   limit,
+		Timeout: 60,
+	}
 
 	updates, err := tc.Client.GetUpdates(uc)
 	if err != nil {
@@ -51,8 +53,8 @@ func (tc *TelegramClient) SendMessage(chatId int64, text string) error {
 	msg.ParseMode = "markdown"
 	msg.DisableWebPagePreview = true
 
-	btn := tgbotapi.NewKeyboardButtonLocation("Отправить локацию")
-	msg.ReplyMarkup = tgbotapi.NewReplyKeyboard([]tgbotapi.KeyboardButton{btn})
+	locationBtn := tgbotapi.NewKeyboardButtonLocation("Отправить локацию")
+	msg.ReplyMarkup = tgbotapi.NewReplyKeyboard([]tgbotapi.KeyboardButton{locationBtn})
 
 	_, err := tc.Client.Send(msg)
 	if err != nil {
