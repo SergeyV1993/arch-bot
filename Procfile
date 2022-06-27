@@ -1,1 +1,1 @@
-web: bin/arch-bot
+web: ArchitectureBot
