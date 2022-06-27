@@ -34,7 +34,7 @@ func NewEnv(token, dbUrl, dbName string, dbConnectionTimeout time.Duration, radi
 func InitEnvs() (*Env, error) {
 	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		log.Print("Error loading .env file")
 		return nil, err
 	}
 
