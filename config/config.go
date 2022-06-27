@@ -35,7 +35,6 @@ func InitEnvs() (*Env, error) {
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Print("Error loading .env file")
-		return nil, err
 	}
 
 	dbCon, err := strconv.Atoi(os.Getenv("DB_CONNECTION_TIMEOUT"))
