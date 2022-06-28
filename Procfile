@@ -1,1 +1,1 @@
-web: ArchitectureBot
+web: ArchitectureBot -p $PORT
