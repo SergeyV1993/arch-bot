@@ -1,1 +1,1 @@
-web: ArchitectureBot -p $PORT
+worker: ArchitectureBot -p $PORT
